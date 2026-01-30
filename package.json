@@ -28,12 +28,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/gdanise/copilot-jira-mcp.git"
+    "url": "https://github.com/GiDanis/copilot-jira-mcp.git"
   },
   "bugs": {
-    "url": "https://github.com/gdanise/copilot-jira-mcp/issues"
+    "url": "https://github.com/GiDanis/copilot-jira-mcp/issues"
   },
-  "homepage": "https://github.com/gdanise/copilot-jira-mcp#readme",
+  "homepage": "https://github.com/GiDanis/copilot-jira-mcp#readme",
   "engines": {
     "node": ">=18.0.0"
   },

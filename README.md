@@ -35,24 +35,21 @@ Interact with Jira issues, search tickets, and manage your workflow directly fro
 
 ### Installation
 
-#### Option 1: NPM (Recommended)
+#### Option 1: Install from GitHub (Recommended) ⭐
 
 ```bash
-# Install globally
-npm install -g copilot-jira-mcp
+# Install globally from GitHub
+npm install -g git+https://github.com/GiDanis/copilot-jira-mcp.git
 
 # Run interactive setup
-jira-mcp setup
-
-# Register with Copilot
-jira-mcp register
+npx jira-mcp setup
 ```
 
-#### Option 2: From Source
+#### Option 2: Clone and Install
 
 ```bash
 # Clone repository
-git clone https://github.com/gdanise/copilot-jira-mcp.git
+git clone https://github.com/GiDanis/copilot-jira-mcp.git
 cd copilot-jira-mcp
 
 # Install dependencies
@@ -63,6 +60,13 @@ npm run setup
 
 # Register with Copilot
 npm run register
+```
+
+#### Option 3: NPM Package (Coming Soon)
+
+```bash
+# This will work after NPM publication
+npm install -g copilot-jira-mcp
 ```
 
 ### Configuration
@@ -271,15 +275,15 @@ See [LICENSE](LICENSE) for details.
 
 If this project helps you, please give it a ⭐ on GitHub!
 
-**Issues?** [Report them here](https://github.com/gdanise/copilot-jira-mcp/issues)  
-**Questions?** [Start a discussion](https://github.com/gdanise/copilot-jira-mcp/discussions)
+**Issues?** [Report them here](https://github.com/GiDanis/copilot-jira-mcp/issues)  
+**Questions?** [Start a discussion](https://github.com/GiDanis/copilot-jira-mcp/discussions)
 
 ---
 
 ## 🔗 Links
 
-- [GitHub Repository](https://github.com/gdanise/copilot-jira-mcp)
-- [NPM Package](https://www.npmjs.com/package/copilot-jira-mcp)
+- [GitHub Repository](https://github.com/GiDanis/copilot-jira-mcp)
+- [NPM Package](https://www.npmjs.com/package/copilot-jira-mcp) (Coming Soon)
 - [Jira REST API Docs](https://developer.atlassian.com/cloud/jira/platform/rest/v3/)
 - [Model Context Protocol](https://modelcontextprotocol.io)
 
