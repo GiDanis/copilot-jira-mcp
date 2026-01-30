@@ -62,10 +62,10 @@ npm run setup
 npm run register
 ```
 
-#### Option 3: NPM Package (Coming Soon)
+#### Option 3: NPM Package
 
 ```bash
-# This will work after NPM publication
+# Install from NPM
 npm install -g copilot-jira-mcp
 ```
 
@@ -290,3 +290,4 @@ If this project helps you, please give it a ⭐ on GitHub!
 ---
 
 **Made with ❤️ for developers who love automation**
+
