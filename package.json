@@ -1,0 +1,53 @@
+{
+  "name": "copilot-jira-mcp",
+  "version": "1.0.0",
+  "description": "Official MCP Server for Jira integration with GitHub Copilot CLI",
+  "type": "module",
+  "main": "src/index.js",
+  "bin": {
+    "jira-mcp": "./src/cli.js"
+  },
+  "scripts": {
+    "start": "node src/index.js",
+    "setup": "node setup/config-wizard.js",
+    "register": "node setup/register-mcp.js",
+    "test": "node --test",
+    "lint": "eslint src/"
+  },
+  "keywords": [
+    "copilot",
+    "jira",
+    "mcp",
+    "atlassian",
+    "github-copilot",
+    "model-context-protocol",
+    "ai",
+    "automation"
+  ],
+  "author": "Giuseppe Danise",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/gdanise/copilot-jira-mcp.git"
+  },
+  "bugs": {
+    "url": "https://github.com/gdanise/copilot-jira-mcp/issues"
+  },
+  "homepage": "https://github.com/gdanise/copilot-jira-mcp#readme",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.4"
+  },
+  "devDependencies": {
+    "eslint": "^8.56.0"
+  },
+  "files": [
+    "src/",
+    "setup/",
+    "docs/",
+    "README.md",
+    "LICENSE"
+  ]
+}
