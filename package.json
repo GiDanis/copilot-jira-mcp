@@ -5,7 +5,8 @@
   "type": "module",
   "main": "src/index.js",
   "bin": {
-    "jira-mcp": "./src/cli.js"
+    "copilot-jira-mcp": "src/cli.js",
+    "jira-mcp": "src/cli.js"
   },
   "scripts": {
     "start": "node src/index.js",
@@ -30,7 +31,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/GiDanis/copilot-jira-mcp.git"
+    "url": "git+https://github.com/GiDanis/copilot-jira-mcp.git"
   },
   "bugs": {
     "url": "https://github.com/GiDanis/copilot-jira-mcp/issues"
