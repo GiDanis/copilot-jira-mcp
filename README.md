@@ -1,197 +1,166 @@
+<div align="center">
+
 # 🎫 Copilot Jira MCP Server
 
-[![npm version](https://img.shields.io/npm/v/copilot-jira-mcp.svg)](https://www.npmjs.com/package/copilot-jira-mcp)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Node.js Version](https://img.shields.io/badge/node-%3E%3D18.0.0-brightgreen.svg)](https://nodejs.org)
-[![MCP Standard](https://img.shields.io/badge/MCP-1.32.0-blue.svg)](https://modelcontextprotocol.io)
+### *Turn your Jira into an AI-powered co-pilot.*
 
-> **Universal Model Context Protocol (MCP) server for seamless Jira integration with GitHub Copilot CLI, Claude Desktop, Cursor, and modern AI coding assistants.**
+[![GitHub Stars](https://img.shields.io/github/stars/GiDanis/copilot-jira-mcp?style=for-the-badge&logo=github&color=gold)](https://github.com/GiDanis/copilot-jira-mcp/stargazers)
+[![npm version](https://img.shields.io/npm/v/copilot-jira-mcp?style=for-the-badge&logo=npm&color=CB3837)](https://www.npmjs.com/package/copilot-jira-mcp)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=for-the-badge)](https://opensource.org/licenses/MIT)
+[![Node.js Version](https://img.shields.io/badge/Node.js-%3E%3D18.0.0-brightgreen.svg?style=for-the-badge&logo=node.js)](https://nodejs.org)
+[![MCP Standard](https://img.shields.io/badge/MCP-1.32.0-8A2BE2.svg?style=for-the-badge)](https://modelcontextprotocol.io)
 
-Interact with Jira issues, search tickets, add comments, create and transition tasks directly from your AI assistant using natural language!
+<p align="center">
+  <b>Seamlessly interact with Jira issues, search JQL, read specs in Markdown, post comments, and transition tickets directly from your terminal or IDE using natural language.</b>
+</p>
 
----
-
-## ✨ Features
-
-- 🔍 **Smart JQL Search** - Search Jira tickets using JQL or natural language with pagination
-- 📝 **Issue Details & ADF Parser** - Rich Markdown parsing of Atlassian Document Format (ADF) descriptions, headings, code blocks, and lists
-- 💬 **Comments** - Read discussion history and post new comments to any issue
-- ⚡ **Workflow Transitions** - Move tickets across statuses (e.g. *To Do* ➔ *In Progress* ➔ *Done*)
-- 🆕 **Create & Update Issues** - Create new Tasks, Bugs, Stories, and edit summaries, priorities, and labels
-- 🔗 **Subtasks & Links** - Navigate issue hierarchies, subtasks, and relationships
-- 👤 **My Issues** - One-click access to tickets assigned to you
-- 📁 **Project Discovery** - List all accessible Jira projects and metadata
-- 🔌 **Multi-Client Support** - One-command setup for **GitHub Copilot CLI**, **Claude Desktop**, and **Cursor**
-- 🔐 **Secure & Private** - Zero plaintext storage, zero hardcoded credentials, full `.env` support
+[Quick Start](#-10-second-quick-start) •
+[Features](#-key-features) •
+[Supported Clients](#-supported-clients) •
+[Available Tools](#️-available-mcp-tools) •
+[Examples](#-interactive-query-examples) •
+[Marketing & Community](#-spread-the-word)
 
 ---
 
-## 🚀 Quick Start
+</div>
 
-### Prerequisites
+## ⚡ 10-Second Quick Start
 
-- **Node.js** 18 or higher ([Download](https://nodejs.org))
-- **Jira Account** (Cloud or Data Center) with API token ([Create API Token](https://id.atlassian.com/manage-profile/security/api-tokens))
-- An MCP-compatible client:
-  - **GitHub Copilot CLI**
-  - **Claude Desktop**
-  - **Cursor** / **Windsurf** / **Antigravity**
+No manual file editing required. Run the guided installer in 1 command:
 
----
-
-### Installation & Setup
-
-#### Option 1: Run via NPX (Fastest) ⭐
-
+### macOS / Linux
 ```bash
-# Run interactive configuration wizard
+curl -fsSL https://raw.githubusercontent.com/GiDanis/copilot-jira-mcp/main/setup/install.sh | bash
+```
+
+### Windows (PowerShell)
+```powershell
+irm https://raw.githubusercontent.com/GiDanis/copilot-jira-mcp/main/setup/install.ps1 | iex
+```
+
+### Or using NPX (Any OS)
+```bash
 npx copilot-jira-mcp setup
-
-# Or register directly with your clients
-npx copilot-jira-mcp register
 ```
 
-#### Option 2: Clone and Install Locally
+The setup wizard will test your credentials and **automatically register** the server across GitHub Copilot CLI, Claude Desktop, and Cursor!
 
-```bash
-# 1. Clone repository
-git clone https://github.com/GiDanis/copilot-jira-mcp.git
-cd copilot-jira-mcp
+---
 
-# 2. Install dependencies
-npm install
+## 💡 Why Copilot Jira MCP?
 
-# 3. Run interactive setup wizard (tests credentials and configures clients)
-npm run setup
-```
+| Without Copilot Jira MCP 😫 | With Copilot Jira MCP 🚀 |
+|---|---|
+| 🔀 Constantly alt-tabbing between IDE and browser | 💬 Ask your AI assistant directly in your editor |
+| 📋 Manually hunting down acceptance criteria | 📝 Instant Markdown-rendered specs & subtasks |
+| 🖱️ 15 clicks to move a ticket to *In Progress* | ⚡ "Move PROJ-42 to In Progress with comment..." |
+| 🔎 Writing manual JQL in Jira search bars | 🧠 AI translates plain English into precise JQL |
+| ⏳ Context loss during code reviews | 🔍 Pull requirements right alongside the diff |
 
-#### Option 3: Global Install
+---
 
-```bash
-npm install -g copilot-jira-mcp
-jira-mcp setup
+## 🔄 How It Works
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Dev as 👨‍💻 Developer
+    participant AI as 🤖 AI Assistant (Copilot / Claude / Cursor)
+    participant MCP as 🎫 Copilot Jira MCP Server
+    participant Jira as ☁️ Atlassian Jira Cloud
+
+    Dev->>AI: "Summarize PROJ-123 requirements and move it to In Progress"
+    AI->>MCP: Call jira_get_issue(issue_key: "PROJ-123")
+    MCP->>Jira: GET /rest/api/3/issue/PROJ-123
+    Jira-->>MCP: Raw Atlassian Document Format (ADF)
+    MCP-->>AI: Clean Markdown spec, fields & subtasks
+    AI->>MCP: Call jira_transition_issue(issue_key: "PROJ-123", transition: "In Progress")
+    MCP->>Jira: POST /rest/api/3/issue/PROJ-123/transitions
+    Jira-->>MCP: 204 No Content (Success)
+    MCP-->>AI: Transition confirmed
+    AI-->>Dev: "Here are the requirements for PROJ-123. I've updated the status to In Progress!"
 ```
 
 ---
 
-## ⚙️ Configuration
+## ✨ Key Features
 
-The server expects three environment variables (either set in your system shell or stored in a local `.env` file):
+- 🔍 **Smart JQL Search** - Search issues via natural language or raw JQL with full pagination support
+- 📝 **Native ADF ➔ Markdown Parser** - Converts Atlassian Document Format (ADF) into clean Markdown (code blocks, lists, tables, quotes, headings)
+- ⚡ **Workflow Transitions** - Advance ticket statuses (e.g., *To Do* ➔ *In Progress* ➔ *Done*) with optional resolution comments
+- 💬 **Comment Threads** - Read discussions and append new comments to issues
+- 🆕 **Create & Update Issues** - Create new Tasks, Bugs, and Stories; edit summaries, descriptions, priorities, and labels
+- 🔗 **Subtasks & Issue Links** - Inspect parent-child hierarchies and linked blocking issues
+- 📁 **Project Discovery** - List all accessible Jira projects and metadata
+- 👤 **My Work Overview** - Instant access to issues assigned to you
+- 🔌 **1-Click Multi-Client Auto-Registration** - Configures Copilot CLI, Claude Desktop, and Cursor automatically
+- 🔒 **Enterprise-Grade Security** - Credentials strictly stay in local environment variables; zero third-party telemetry
 
-| Variable | Description | Example |
-|---|---|---|
-| `JIRA_URL` | Your Atlassian Jira instance URL | `https://your-company.atlassian.net` |
-| `JIRA_EMAIL` | Account email associated with Jira | `developer@company.com` |
-| `JIRA_API_TOKEN` | Jira API Token ([generate here](https://id.atlassian.com/manage-profile/security/api-tokens)) | `ATATT3xFfGF0...` |
-| `JIRA_PAT` | *(Optional, for Data Center / Server)* Personal Access Token | `MTYyODc2...` |
+---
 
-### Manual Client Registration
+## 📱 Supported Clients
 
-You can also manually add the server to your favorite MCP client configuration:
-
-#### GitHub Copilot CLI (`~/.copilot/mcp.json`)
-```json
-{
-  "mcpServers": {
-    "jira": {
-      "command": "node",
-      "args": ["/path/to/copilot-jira-mcp/src/index.js"],
-      "env": {
-        "JIRA_URL": "https://your-company.atlassian.net",
-        "JIRA_EMAIL": "your-email@company.com",
-        "JIRA_API_TOKEN": "your-api-token"
-      }
-    }
-  }
-}
-```
-
-#### Claude Desktop (`claude_desktop_config.json`)
-```json
-{
-  "mcpServers": {
-    "jira": {
-      "command": "npx",
-      "args": ["-y", "copilot-jira-mcp", "start"],
-      "env": {
-        "JIRA_URL": "https://your-company.atlassian.net",
-        "JIRA_EMAIL": "your-email@company.com",
-        "JIRA_API_TOKEN": "your-api-token"
-      }
-    }
-  }
-}
-```
-
-#### Cursor (`~/.cursor/mcp.json`)
-```json
-{
-  "mcpServers": {
-    "jira": {
-      "command": "node",
-      "args": ["/path/to/copilot-jira-mcp/src/index.js"],
-      "env": {
-        "JIRA_URL": "https://your-company.atlassian.net",
-        "JIRA_EMAIL": "your-email@company.com",
-        "JIRA_API_TOKEN": "your-api-token"
-      }
-    }
-  }
-}
-```
+| Client | Status | Configuration File |
+|---|:---:|---|
+| **GitHub Copilot CLI** | ✅ Native | `~/.copilot/mcp.json` |
+| **Claude Desktop** | ✅ Native | `claude_desktop_config.json` |
+| **Cursor IDE** | ✅ Native | `~/.cursor/mcp.json` |
+| **Windsurf & VS Code** | ✅ Supported | Standard MCP Stdio Configuration |
+| **Antigravity / Gemini** | ✅ Supported | Local Stdio Transport |
 
 ---
 
 ## 🛠️ Available MCP Tools
 
+Copilot Jira MCP exposes **12 comprehensive tools** spanning read, write, and workflow actions:
+
 | Tool | Action | Description |
-|---|---|---|
-| `jira_get_issue` | 🔍 Read | Comprehensive details of an issue (summary, markdown description, status, priority, subtasks, links) |
-| `jira_search_issues` | 🔍 Read | Search issues using JQL syntax with pagination support |
-| `jira_get_my_issues` | 🔍 Read | Fast query for tickets assigned to current user, optional status filter |
-| `jira_get_comments` | 🔍 Read | Read discussion and comment history with author and timestamp |
-| `jira_get_subtasks` | 🔍 Read | List all subtasks and child issues of a ticket |
-| `jira_get_projects` | 🔍 Read | List all Jira projects accessible by the authenticated user |
-| `jira_get_transitions` | 🔍 Read | Inspect available workflow transitions for an issue |
-| `jira_whoami` | 🔍 Read | Verify connection and show authenticated user details |
+|---|:---:|---|
+| `jira_get_issue` | 🔍 Read | Comprehensive issue details, markdown description, subtasks, links, priority |
+| `jira_search_issues` | 🔍 Read | Search Jira issues using JQL syntax with pagination |
+| `jira_get_my_issues` | 🔍 Read | Quick query for tickets assigned to current user, optional status filter |
+| `jira_get_comments` | 🔍 Read | Retrieve discussion history with author, date, and formatted text |
+| `jira_get_subtasks` | 🔍 Read | List all subtasks and child issues linked to a parent ticket |
+| `jira_get_projects` | 🔍 Read | List all Jira projects accessible by authenticated account |
+| `jira_get_transitions` | 🔍 Read | List valid status transitions for an issue workflow |
+| `jira_whoami` | 🔍 Read | Test connection and display authenticated user details |
 | `jira_create_issue` | ✏️ Write | Create new issue (Task, Bug, Story) with summary, description, priority, labels |
 | `jira_update_issue` | ✏️ Write | Modify existing issue summary, description, priority, or labels |
 | `jira_add_comment` | ✏️ Write | Post a new comment to an issue (plain text or markdown supported) |
-| `jira_transition_issue` | ⚡ Action | Move an issue to a new status (e.g., "In Progress", "Done") with optional comment |
+| `jira_transition_issue` | ⚡ Action | Move an issue through workflow states (*In Progress*, *Done*, etc.) |
 
-*(Legacy tool aliases `jira_get_ticket`, `jira_search_tickets`, and `jira_get_my_tickets` remain supported for backward compatibility).*
+*(Legacy aliases `jira_get_ticket`, `jira_search_tickets`, and `jira_get_my_tickets` are maintained for 100% backwards compatibility).*
 
 ---
 
-## 💬 Natural Language Prompt Examples
+## 💬 Interactive Query Examples
 
-Once registered, just talk naturally to your AI assistant:
+Once installed, simply talk naturally to your AI:
 
-### Checking Tickets
-- *"Show me all tickets assigned to me that are In Progress"*
-- *"What is issue PROJ-1234 about? Summarize the requirements and comments."*
-- *"Find all high priority bugs reported in project PROJ this sprint."*
+```bash
+# In Copilot CLI, Claude Desktop, or Cursor:
 
-### Updating Workflow
-- *"Add a comment to PROJ-1234 saying that PR #42 is ready for review."*
-- *"What are the available transitions for PROJ-1234?"*
-- *"Move PROJ-1234 to Done with comment 'Fixed in version 2.0.0'"*
-
-### Creating Issues
-- *"Create a Bug in project PROJ: 'Login page crashes on mobile', priority High."*
-- *"Update the description of PROJ-456 to include the new API contract."*
+> "Show me my open tickets in project PROJ"
+> "What are the acceptance criteria for PROJ-1234?"
+> "Add a comment to PROJ-1234: 'PR #42 is up for review.'"
+> "Move PROJ-1234 to 'In Progress'"
+> "Create a high priority bug: 'Payment gateway timeout on checkout'"
+> "List all blockers linked to PROJ-567"
+> "Who am I logged in as in Jira?"
+```
 
 ---
 
 ## 💻 CLI Commands
 
-The `jira-mcp` CLI provides handy commands:
+The `jira-mcp` CLI provides interactive management commands:
 
 ```bash
-# Start server manually on stdio
-jira-mcp start
+# Interactive dashboard (wizard, client registration, diagnostics)
+npx copilot-jira-mcp
 
-# Run interactive configuration wizard
+# Guided setup wizard
 jira-mcp setup
 
 # Register with all detected MCP client configs
@@ -200,19 +169,52 @@ jira-mcp register
 # Test Jira credentials and print connection info
 jira-mcp test
 
-# Show CLI options
+# Start server directly (used by AI clients)
+jira-mcp start
+
+# Show help
 jira-mcp --help
 ```
 
 ---
 
-## 🧪 Testing & Linting
+## ⚙️ Manual Configuration
+
+If you prefer configuring manually, set these environment variables:
 
 ```bash
-# Run automated tests
+export JIRA_URL="https://your-company.atlassian.net"
+export JIRA_EMAIL="your-email@company.com"
+export JIRA_API_TOKEN="your-atlassian-api-token"
+```
+
+Then add this block to your client config (`~/.copilot/mcp.json` or `claude_desktop_config.json`):
+
+```json
+{
+  "mcpServers": {
+    "jira": {
+      "command": "npx",
+      "args": ["-y", "copilot-jira-mcp", "start"],
+      "env": {
+        "JIRA_URL": "${JIRA_URL}",
+        "JIRA_EMAIL": "${JIRA_EMAIL}",
+        "JIRA_API_TOKEN": "${JIRA_API_TOKEN}"
+      }
+    }
+  }
+}
+```
+
+---
+
+## 🧪 Testing & Quality Assurance
+
+```bash
+# Run unit test suite (10/10 tests pass)
 npm test
 
-# Run code linter
+# Run ESLint check
 npm run lint
 ```
 
@@ -220,19 +222,24 @@ npm run lint
 
 ## 🔐 Security & Privacy
 
-- **No Plaintext Leaks:** API tokens are stored in environment variables or user-level config files.
-- **`.gitignore` Protection:** Local `.env` and credential files are strictly ignored.
-- **Zero Telemetry:** The server only talks directly to your configured Jira host via HTTPS.
-- See [SECURITY.md](SECURITY.md) for vulnerability reporting.
+- **Zero Plaintext Storage**: Tokens are stored strictly in user-level environment variables or `.env`.
+- **Zero Third-Party Relays**: Direct HTTPS communication with your Jira Cloud/Server instance.
+- **`.gitignore` Enforced**: Credential files are never tracked by version control.
+- See [SECURITY.md](SECURITY.md) for vulnerability disclosure.
 
 ---
 
-## 🤝 Contributing
+## 📢 Spread the Word!
 
-Contributions are welcome! Please check [CONTRIBUTING.md](CONTRIBUTING.md) for development workflows and guidelines.
+If **Copilot Jira MCP** saves you time and context-switching:
+
+- ⭐ **Star this repository** on [GitHub](https://github.com/GiDanis/copilot-jira-mcp)
+- 🐦 **Share on X / Twitter**: [Click to Tweet](https://twitter.com/intent/tweet?text=Supercharge%20your%20dev%20workflow%20with%20Copilot%20Jira%20MCP!%20Query%2C%20update%20and%20transition%20Jira%20tickets%20directly%20from%20Copilot%2C%20Claude%20%26%20Cursor%3A&url=https%3A%2F%2Fgithub.com%2FGiDanis%2Fcopilot-jira-mcp)
+- 💼 **Share on LinkedIn**: Check out ready-made posts in [MARKETING.md](docs/MARKETING.md)
+- 💡 **Suggest features** in [Discussions](https://github.com/GiDanis/copilot-jira-mcp/discussions)
 
 ---
 
 ## 📜 License
 
-MIT © Giuseppe Danise — see [LICENSE](LICENSE) for details.
+MIT © 2026 Giuseppe Danise — see [LICENSE](LICENSE) for details.
