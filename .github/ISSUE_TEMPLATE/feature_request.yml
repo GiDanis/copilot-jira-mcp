@@ -1,0 +1,25 @@
+name: 💡 Feature Request
+description: Suggest an idea or new feature for Copilot Jira MCP
+labels: ['enhancement']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Have an idea to make Jira integration even better? We'd love to hear it!
+  - type: textarea
+    id: problem
+    attributes:
+      label: Is your feature request related to a problem?
+      description: A clear description of what the problem is.
+  - type: textarea
+    id: solution
+    attributes:
+      label: Describe the solution you'd like
+      description: Clear and concise description of the new tool, parameter, or enhancement.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Describe alternatives you've considered
+      description: Any alternative solutions or workarounds.

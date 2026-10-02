@@ -1,0 +1,35 @@
+name: 🐛 Bug Report
+description: Report a bug or unexpected behavior in Copilot Jira MCP
+labels: ['bug']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report an issue! Please provide as much detail as possible.
+  - type: input
+    id: environment
+    attributes:
+      label: Environment Info
+      description: OS version, Node.js version, and MCP client (e.g. Copilot CLI, Claude Desktop, Cursor)
+      placeholder: Ubuntu 24.04 / macOS Sonoma, Node v20.11, Claude Desktop
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: What happened?
+      description: Describe what you were trying to do and what failed.
+      placeholder: When I requested "Move PROJ-123 to In Progress", I received the following error...
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs / Error Output
+      description: Paste any terminal output, logs, or error messages (redacting private tokens or credentials).
+      render: shell
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behavior
+      description: What did you expect to happen instead?

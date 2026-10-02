@@ -14,7 +14,7 @@ export class JiraClient {
     this.email = (config.email || process.env.JIRA_EMAIL || '').trim();
     this.apiToken = (config.apiToken || process.env.JIRA_API_TOKEN || '').trim();
     this.pat = (config.pat || process.env.JIRA_PAT || '').trim();
-    this.timeout = config.timeout || 30000;
+    this.timeout = config.timeout || (process.env.JIRA_TIMEOUT ? Number(process.env.JIRA_TIMEOUT) : 30000);
 
     if (this.url && !this.url.startsWith('http://') && !this.url.startsWith('https://')) {
       this.url = `https://${this.url}`;
@@ -140,11 +140,20 @@ export class JiraClient {
   }
 
   /**
+   * Helper to normalize issue keys to uppercase
+   * @param {string} key
+   */
+  normalizeKey(key) {
+    return String(key || '').trim().toUpperCase();
+  }
+
+  /**
    * Get single issue details
    * @param {string} issueKey
    */
   async getIssue(issueKey) {
-    const issue = await this.request(`/rest/api/3/issue/${encodeURIComponent(issueKey)}`);
+    const key = this.normalizeKey(issueKey);
+    const issue = await this.request(`/rest/api/3/issue/${encodeURIComponent(key)}`);
     const fields = issue.fields || {};
 
     return {
@@ -243,8 +252,9 @@ export class JiraClient {
    * @param {number} [maxResults=20]
    */
   async getIssueComments(issueKey, maxResults = 20) {
+    const key = this.normalizeKey(issueKey);
     const response = await this.request(
-      `/rest/api/3/issue/${encodeURIComponent(issueKey)}/comment?maxResults=${maxResults}&orderBy=-created`
+      `/rest/api/3/issue/${encodeURIComponent(key)}/comment?maxResults=${maxResults}&orderBy=-created`
     );
 
     const comments = (response.comments || []).map((c) => ({
@@ -268,12 +278,13 @@ export class JiraClient {
    * @param {string} commentText
    */
   async addComment(issueKey, commentText) {
+    const key = this.normalizeKey(issueKey);
     const body = {
       body: textToADF(commentText),
     };
 
     const response = await this.request(
-      `/rest/api/3/issue/${encodeURIComponent(issueKey)}/comment`,
+      `/rest/api/3/issue/${encodeURIComponent(key)}/comment`,
       {
         method: 'POST',
         body: JSON.stringify(body),
@@ -285,7 +296,7 @@ export class JiraClient {
       author: response.author?.displayName,
       body: adfToMarkdown(response.body),
       created: response.created,
-      url: `${this.url}/browse/${issueKey}?focusedCommentId=${response.id}`,
+      url: `${this.url}/browse/${key}?focusedCommentId=${response.id}`,
     };
   }
 
@@ -344,6 +355,7 @@ export class JiraClient {
    * @param {object} updateFields
    */
   async updateIssue(issueKey, updateFields = {}) {
+    const key = this.normalizeKey(issueKey);
     const fields = {};
 
     if (updateFields.summary) {
@@ -359,15 +371,15 @@ export class JiraClient {
       fields.labels = updateFields.labels;
     }
 
-    await this.request(`/rest/api/3/issue/${encodeURIComponent(issueKey)}`, {
+    await this.request(`/rest/api/3/issue/${encodeURIComponent(key)}`, {
       method: 'PUT',
       body: JSON.stringify({ fields }),
     });
 
     return {
-      key: issueKey,
+      key,
       updated: true,
-      url: `${this.url}/browse/${issueKey}`,
+      url: `${this.url}/browse/${key}`,
     };
   }
 
@@ -376,8 +388,9 @@ export class JiraClient {
    * @param {string} issueKey
    */
   async getTransitions(issueKey) {
+    const key = this.normalizeKey(issueKey);
     const response = await this.request(
-      `/rest/api/3/issue/${encodeURIComponent(issueKey)}/transitions`
+      `/rest/api/3/issue/${encodeURIComponent(key)}/transitions`
     );
 
     return (response.transitions || []).map((t) => ({
@@ -395,10 +408,11 @@ export class JiraClient {
    * @param {string} [comment]
    */
   async transitionIssue(issueKey, transitionIdOrName, comment = null) {
+    const key = this.normalizeKey(issueKey);
     // If name is passed instead of id, resolve transition id
     let transitionId = transitionIdOrName;
     if (isNaN(Number(transitionIdOrName))) {
-      const transitions = await this.getTransitions(issueKey);
+      const transitions = await this.getTransitions(key);
       const match = transitions.find(
         (t) =>
           t.name.toLowerCase() === transitionIdOrName.toLowerCase() ||
@@ -407,7 +421,7 @@ export class JiraClient {
       if (!match) {
         const available = transitions.map((t) => `"${t.name}" (to: ${t.toStatus})`).join(', ');
         throw new Error(
-          `Transition "${transitionIdOrName}" not found for issue ${issueKey}. Available transitions: ${available}`
+          `Transition "${transitionIdOrName}" not found for issue ${key}. Available transitions: ${available}`
         );
       }
       transitionId = match.id;
@@ -429,16 +443,16 @@ export class JiraClient {
       };
     }
 
-    await this.request(`/rest/api/3/issue/${encodeURIComponent(issueKey)}/transitions`, {
+    await this.request(`/rest/api/3/issue/${encodeURIComponent(key)}/transitions`, {
       method: 'POST',
       body: JSON.stringify(payload),
     });
 
     return {
-      key: issueKey,
+      key,
       transitionId,
       success: true,
-      url: `${this.url}/browse/${issueKey}`,
+      url: `${this.url}/browse/${key}`,
     };
   }
 
@@ -447,7 +461,8 @@ export class JiraClient {
    * @param {string} issueKey
    */
   async getIssueSubtasks(issueKey) {
-    const issue = await this.getIssue(issueKey);
+    const key = this.normalizeKey(issueKey);
+    const issue = await this.getIssue(key);
     return {
       key: issue.key,
       summary: issue.summary,

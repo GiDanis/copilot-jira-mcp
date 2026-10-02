@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import 'dotenv/config';
-import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { McpServer, ResourceTemplate } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { z } from 'zod';
 import { JiraClient } from './jira-client.js';
@@ -23,6 +23,8 @@ export function createMcpServer(options = {}) {
     {
       capabilities: {
         tools: {},
+        resources: {},
+        prompts: {},
       },
     }
   );
@@ -261,6 +263,178 @@ export function createMcpServer(options = {}) {
           instanceUrl: client.url,
         };
       })
+  );
+
+  // ═══════════════════════════════════════════════════════════
+  // 📚 MCP RESOURCES
+  // ═══════════════════════════════════════════════════════════
+
+  // Resource 1: Single Jira Issue
+  server.resource(
+    'jira-issue',
+    new ResourceTemplate('jira://issue/{key}', { list: undefined }),
+    async (uri, { key }) => {
+      try {
+        const issue = await client.getIssue(key);
+        return {
+          contents: [
+            {
+              uri: uri.href,
+              mimeType: 'application/json',
+              text: JSON.stringify(issue, null, 2),
+            },
+          ],
+        };
+      } catch (err) {
+        return {
+          contents: [
+            {
+              uri: uri.href,
+              mimeType: 'text/plain',
+              text: `Error loading Jira issue ${key}: ${err.message}`,
+            },
+          ],
+        };
+      }
+    }
+  );
+
+  // Resource 2: My Open Issues
+  server.resource(
+    'jira-my-open-issues',
+    'jira://my-open-issues',
+    async (uri) => {
+      try {
+        const results = await client.getMyIssues('In Progress', 25);
+        return {
+          contents: [
+            {
+              uri: uri.href,
+              mimeType: 'application/json',
+              text: JSON.stringify(results, null, 2),
+            },
+          ],
+        };
+      } catch (err) {
+        return {
+          contents: [
+            {
+              uri: uri.href,
+              mimeType: 'text/plain',
+              text: `Error loading my open issues: ${err.message}`,
+            },
+          ],
+        };
+      }
+    }
+  );
+
+  // Resource 3: Accessible Projects
+  server.resource(
+    'jira-projects',
+    'jira://projects',
+    async (uri) => {
+      try {
+        const projects = await client.getProjects();
+        return {
+          contents: [
+            {
+              uri: uri.href,
+              mimeType: 'application/json',
+              text: JSON.stringify(projects, null, 2),
+            },
+          ],
+        };
+      } catch (err) {
+        return {
+          contents: [
+            {
+              uri: uri.href,
+              mimeType: 'text/plain',
+              text: `Error loading projects: ${err.message}`,
+            },
+          ],
+        };
+      }
+    }
+  );
+
+  // ═══════════════════════════════════════════════════════════
+  // 💡 MCP PROMPTS
+  // ═══════════════════════════════════════════════════════════
+
+  // Prompt 1: Daily Standup Summary
+  server.prompt(
+    'jira_standup',
+    'Generate a daily standup update based on Jira activity and assigned tickets',
+    {
+      status: z.string().optional().describe('Optional status filter (e.g. "In Progress")'),
+    },
+    ({ status }) => ({
+      messages: [
+        {
+          role: 'user',
+          content: {
+            type: 'text',
+            text: `Please generate a structured daily standup update using my Jira tickets${
+              status ? ` filtered by status "${status}"` : ''
+            }. Structure the response with:
+1. Yesterday / Recent Accomplishments: Tickets completed or updated
+2. Today's Plan: Tasks currently "In Progress" or queued
+3. Blockers & Risks: Any issues with blockers, high priority flags, or pending reviews`,
+          },
+        },
+      ],
+    })
+  );
+
+  // Prompt 2: Sprint & Release Review
+  server.prompt(
+    'jira_sprint_review',
+    'Generate a release or sprint review summarizing delivered features and resolved bugs',
+    {
+      project: z.string().describe('The project key to review (e.g. PROJ)'),
+    },
+    ({ project }) => ({
+      messages: [
+        {
+          role: 'user',
+          content: {
+            type: 'text',
+            text: `Review closed and in-progress Jira issues for project "${project}".
+Generate:
+1. Executive Summary: What main goals were achieved
+2. Delivered Features: Grouped by story/feature
+3. Resolved Bugs: Fixes shipped and impact
+4. Carried-over Tasks: What remains incomplete and reasons`,
+          },
+        },
+      ],
+    })
+  );
+
+  // Prompt 3: Bug Triage Assistant
+  server.prompt(
+    'jira_bug_triage',
+    'Analyze, categorize, and triage a Jira bug ticket with reproduction steps and severity recommendations',
+    {
+      issue_key: z.string().describe('The Jira issue key to triage (e.g. PROJ-123)'),
+    },
+    ({ issue_key }) => ({
+      messages: [
+        {
+          role: 'user',
+          content: {
+            type: 'text',
+            text: `Analyze and triage Jira bug "${issue_key}".
+1. Retrieve its details and description
+2. Check if reproduction steps, environment, and logs are complete
+3. Recommend priority and severity adjustment if needed
+4. Suggest potential root causes or affected codebase components`,
+          },
+        },
+      ],
+    })
   );
 
   return server;
