@@ -1,307 +1,285 @@
 #!/usr/bin/env node
 
-import { Server } from '@modelcontextprotocol/sdk/server/index.js';
+import 'dotenv/config';
+import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
-import {
-  CallToolRequestSchema,
-  ListToolsRequestSchema,
-} from '@modelcontextprotocol/sdk/types.js';
-import https from 'https';
+import { z } from 'zod';
+import { JiraClient } from './jira-client.js';
 
-// Configurazione Jira (da variabili d'ambiente)
-const JIRA_URL = process.env.JIRA_URL || 'https://generali-iiab.atlassian.net';
-const JIRA_EMAIL = process.env.JIRA_EMAIL;
-const JIRA_API_TOKEN = process.env.JIRA_API_TOKEN;
+/**
+ * Creates and configures the Jira MCP Server
+ * @param {object} [options]
+ * @param {JiraClient} [options.client]
+ * @returns {McpServer}
+ */
+export function createMcpServer(options = {}) {
+  const client = options.client || new JiraClient();
 
-// Verifica credenziali
-if (!JIRA_EMAIL || !JIRA_API_TOKEN) {
-  console.error('❌ Errore: Configura JIRA_EMAIL e JIRA_API_TOKEN nelle variabili d\'ambiente');
-  process.exit(1);
-}
-
-// Credenziali Basic Auth
-const auth = Buffer.from(`${JIRA_EMAIL}:${JIRA_API_TOKEN}`).toString('base64');
-
-// Funzione helper per chiamate API Jira
-function jiraApiCall(path, method = 'GET', body = null) {
-  return new Promise((resolve, reject) => {
-    const url = new URL(path, JIRA_URL);
-    
-    const options = {
-      hostname: url.hostname,
-      path: url.pathname + url.search,
-      method: method,
-      headers: {
-        'Authorization': `Basic ${auth}`,
-        'Content-Type': 'application/json',
-        'Accept': 'application/json'
-      }
-    };
-
-    const req = https.request(options, (res) => {
-      let data = '';
-      
-      res.on('data', (chunk) => {
-        data += chunk;
-      });
-      
-      res.on('end', () => {
-        if (res.statusCode >= 200 && res.statusCode < 300) {
-          try {
-            resolve(JSON.parse(data));
-          } catch (e) {
-            resolve(data);
-          }
-        } else {
-          reject(new Error(`HTTP ${res.statusCode}: ${data}`));
-        }
-      });
-    });
-
-    req.on('error', (error) => {
-      reject(error);
-    });
-
-    if (body) {
-      req.write(JSON.stringify(body));
-    }
-
-    req.end();
-  });
-}
-
-// Funzione per estrarre testo dalla descrizione Jira (formato ADF)
-function extractTextFromADF(adf) {
-  if (!adf || !adf.content) return '';
-  
-  let text = '';
-  for (const content of adf.content) {
-    if (content.content) {
-      for (const item of content.content) {
-        if (item.text) {
-          text += item.text + ' ';
-        }
-      }
-    }
-    text += '\n';
-  }
-  return text.trim();
-}
-
-// Crea il server MCP
-const server = new Server(
-  {
-    name: 'jira-mcp-server',
-    version: '1.0.0',
-  },
-  {
-    capabilities: {
-      tools: {},
+  const server = new McpServer(
+    {
+      name: 'copilot-jira-mcp',
+      version: '2.0.0',
     },
-  }
-);
+    {
+      capabilities: {
+        tools: {},
+      },
+    }
+  );
 
-// Lista dei tool disponibili
-server.setRequestHandler(ListToolsRequestSchema, async () => {
-  return {
-    tools: [
-      {
-        name: 'jira_get_ticket',
-        description: 'Recupera i dettagli di un ticket Jira specifico tramite la sua chiave (es. IIAB-81069)',
-        inputSchema: {
-          type: 'object',
-          properties: {
-            ticket_key: {
-              type: 'string',
-              description: 'La chiave del ticket Jira (es. IIAB-81069)',
-            },
+  // Helper for error formatting
+  const handleAction = async (fn) => {
+    try {
+      const result = await fn();
+      return {
+        content: [
+          {
+            type: 'text',
+            text: typeof result === 'string' ? result : JSON.stringify(result, null, 2),
           },
-          required: ['ticket_key'],
-        },
-      },
-      {
-        name: 'jira_search_tickets',
-        description: 'Cerca ticket Jira usando JQL (Jira Query Language). Esempi: "project = IIAB AND status = Open", "assignee = currentUser()", "labels = backend"',
-        inputSchema: {
-          type: 'object',
-          properties: {
-            jql: {
-              type: 'string',
-              description: 'Query JQL per cercare i ticket',
-            },
-            max_results: {
-              type: 'number',
-              description: 'Numero massimo di risultati (default: 20)',
-              default: 20,
-            },
+        ],
+      };
+    } catch (error) {
+      return {
+        content: [
+          {
+            type: 'text',
+            text: `❌ Jira Error: ${error.message}`,
           },
-          required: ['jql'],
-        },
-      },
-      {
-        name: 'jira_get_my_tickets',
-        description: 'Recupera tutti i ticket assegnati all\'utente corrente',
-        inputSchema: {
-          type: 'object',
-          properties: {
-            status: {
-              type: 'string',
-              description: 'Filtra per stato (es. "In Progress", "Open", "To Do")',
-            },
-            max_results: {
-              type: 'number',
-              description: 'Numero massimo di risultati (default: 20)',
-              default: 20,
-            },
-          },
-        },
-      },
-    ],
+        ],
+        isError: true,
+      };
+    }
   };
-});
 
-// Handler per l'esecuzione dei tool
-server.setRequestHandler(CallToolRequestSchema, async (request) => {
-  const { name, arguments: args } = request.params;
+  // 1. jira_get_issue
+  server.tool(
+    'jira_get_issue',
+    'Get comprehensive details of a specific Jira issue (summary, status, description, type, priority, assignee, reporter, subtasks, links, dates, and URL).',
+    {
+      issue_key: z.string().describe('The Jira issue key (e.g. PROJ-123)'),
+    },
+    async ({ issue_key }) => handleAction(() => client.getIssue(issue_key))
+  );
 
-  try {
-    if (name === 'jira_get_ticket') {
-      const ticketKey = args.ticket_key;
-      const issue = await jiraApiCall(`/rest/api/3/issue/${ticketKey}`);
-      
-      const fields = issue.fields;
-      const description = extractTextFromADF(fields.description);
-      
-      const result = {
-        key: issue.key,
-        summary: fields.summary,
-        status: fields.status.name,
-        type: fields.issuetype.name,
-        priority: fields.priority?.name,
-        assignee: fields.assignee?.displayName,
-        reporter: fields.reporter?.displayName,
-        description: description,
-        labels: fields.labels || [],
-        created: fields.created,
-        updated: fields.updated,
-        url: `${JIRA_URL}/browse/${issue.key}`
-      };
+  // Backwards compatibility alias: jira_get_ticket
+  server.tool(
+    'jira_get_ticket',
+    '[Legacy alias for jira_get_issue] Get details of a specific Jira issue.',
+    {
+      ticket_key: z.string().describe('The Jira issue key (e.g. PROJ-123)'),
+    },
+    async ({ ticket_key }) => handleAction(() => client.getIssue(ticket_key))
+  );
 
-      return {
-        content: [
-          {
-            type: 'text',
-            text: JSON.stringify(result, null, 2),
-          },
-        ],
-      };
-    }
+  // 2. jira_search_issues
+  server.tool(
+    'jira_search_issues',
+    'Search Jira issues using JQL (Jira Query Language). E.g. "project = PROJ AND status = Open", "assignee = currentUser() ORDER BY updated DESC".',
+    {
+      jql: z.string().describe('JQL query string'),
+      max_results: z
+        .number()
+        .min(1)
+        .max(100)
+        .optional()
+        .default(20)
+        .describe('Maximum number of issues to return (default: 20)'),
+      start_at: z
+        .number()
+        .min(0)
+        .optional()
+        .default(0)
+        .describe('Index of the first issue to return for pagination (default: 0)'),
+    },
+    async ({ jql, max_results, start_at }) =>
+      handleAction(() => client.searchIssues(jql, max_results, start_at))
+  );
 
-    if (name === 'jira_search_tickets') {
-      const jql = args.jql;
-      const maxResults = args.max_results || 20;
-      
-      const body = {
-        jql: jql,
-        maxResults: maxResults,
-        fields: ['summary', 'status', 'assignee', 'priority', 'issuetype', 'labels', 'created', 'updated']
-      };
+  // Backwards compatibility alias: jira_search_tickets
+  server.tool(
+    'jira_search_tickets',
+    '[Legacy alias for jira_search_issues] Search Jira issues using JQL.',
+    {
+      jql: z.string().describe('JQL query string'),
+      max_results: z.number().optional().default(20).describe('Max results (default: 20)'),
+    },
+    async ({ jql, max_results }) => handleAction(() => client.searchIssues(jql, max_results))
+  );
 
-      const response = await jiraApiCall('/rest/api/3/search', 'POST', body);
-      
-      const results = response.issues.map(issue => ({
-        key: issue.key,
-        summary: issue.fields.summary,
-        status: issue.fields.status.name,
-        type: issue.fields.issuetype.name,
-        priority: issue.fields.priority?.name,
-        assignee: issue.fields.assignee?.displayName,
-        labels: issue.fields.labels || [],
-        created: issue.fields.created,
-        updated: issue.fields.updated,
-        url: `${JIRA_URL}/browse/${issue.key}`
-      }));
+  // 3. jira_get_my_issues
+  server.tool(
+    'jira_get_my_issues',
+    'Retrieve issues assigned to the currently authenticated user, optionally filtered by status.',
+    {
+      status: z
+        .string()
+        .optional()
+        .describe('Filter by status name (e.g. "In Progress", "To Do", "Done")'),
+      max_results: z.number().optional().default(20).describe('Max results (default: 20)'),
+    },
+    async ({ status, max_results }) => handleAction(() => client.getMyIssues(status, max_results))
+  );
 
-      return {
-        content: [
-          {
-            type: 'text',
-            text: JSON.stringify({
-              total: response.total,
-              count: results.length,
-              tickets: results
-            }, null, 2),
-          },
-        ],
-      };
-    }
+  // Backwards compatibility alias: jira_get_my_tickets
+  server.tool(
+    'jira_get_my_tickets',
+    '[Legacy alias for jira_get_my_issues] Retrieve issues assigned to current user.',
+    {
+      status: z.string().optional().describe('Filter by status name'),
+      max_results: z.number().optional().default(20).describe('Max results'),
+    },
+    async ({ status, max_results }) => handleAction(() => client.getMyIssues(status, max_results))
+  );
 
-    if (name === 'jira_get_my_tickets') {
-      let jql = 'assignee = currentUser()';
-      
-      if (args.status) {
-        jql += ` AND status = "${args.status}"`;
-      }
-      
-      jql += ' ORDER BY updated DESC';
-      
-      const maxResults = args.max_results || 20;
-      
-      const body = {
-        jql: jql,
-        maxResults: maxResults,
-        fields: ['summary', 'status', 'priority', 'issuetype', 'labels', 'updated']
-      };
+  // 4. jira_get_comments
+  server.tool(
+    'jira_get_comments',
+    'Retrieve all comments for a specific Jira issue.',
+    {
+      issue_key: z.string().describe('The Jira issue key (e.g. PROJ-123)'),
+      max_results: z.number().optional().default(20).describe('Max comments to retrieve'),
+    },
+    async ({ issue_key, max_results }) =>
+      handleAction(() => client.getIssueComments(issue_key, max_results))
+  );
 
-      const response = await jiraApiCall('/rest/api/3/search', 'POST', body);
-      
-      const results = response.issues.map(issue => ({
-        key: issue.key,
-        summary: issue.fields.summary,
-        status: issue.fields.status.name,
-        type: issue.fields.issuetype.name,
-        priority: issue.fields.priority?.name,
-        labels: issue.fields.labels || [],
-        updated: issue.fields.updated,
-        url: `${JIRA_URL}/browse/${issue.key}`
-      }));
+  // 5. jira_add_comment
+  server.tool(
+    'jira_add_comment',
+    'Add a new comment to an existing Jira issue.',
+    {
+      issue_key: z.string().describe('The Jira issue key (e.g. PROJ-123)'),
+      comment: z.string().describe('Comment content (plain text or markdown)'),
+    },
+    async ({ issue_key, comment }) => handleAction(() => client.addComment(issue_key, comment))
+  );
 
-      return {
-        content: [
-          {
-            type: 'text',
-            text: JSON.stringify({
-              total: response.total,
-              count: results.length,
-              tickets: results
-            }, null, 2),
-          },
-        ],
-      };
-    }
+  // 6. jira_create_issue
+  server.tool(
+    'jira_create_issue',
+    'Create a new Jira issue (Task, Bug, Story, etc.) with specified fields.',
+    {
+      project_key: z.string().describe('The project key (e.g. PROJ)'),
+      summary: z.string().describe('Title / summary of the issue'),
+      issue_type: z
+        .string()
+        .optional()
+        .default('Task')
+        .describe('Issue type (e.g. "Task", "Bug", "Story")'),
+      description: z.string().optional().describe('Description of the issue (markdown supported)'),
+      priority: z
+        .string()
+        .optional()
+        .describe('Priority name (e.g. "Highest", "High", "Medium", "Low", "Lowest")'),
+      labels: z.array(z.string()).optional().describe('Array of label tags'),
+    },
+    async (params) =>
+      handleAction(() =>
+        client.createIssue({
+          projectKey: params.project_key,
+          summary: params.summary,
+          issueType: params.issue_type,
+          description: params.description,
+          priority: params.priority,
+          labels: params.labels,
+        })
+      )
+  );
 
-    throw new Error(`Tool sconosciuto: ${name}`);
-  } catch (error) {
-    return {
-      content: [
-        {
-          type: 'text',
-          text: `Errore: ${error.message}`,
-        },
-      ],
-      isError: true,
-    };
-  }
-});
+  // 7. jira_update_issue
+  server.tool(
+    'jira_update_issue',
+    'Update fields (summary, description, priority, labels) of an existing Jira issue.',
+    {
+      issue_key: z.string().describe('The Jira issue key (e.g. PROJ-123)'),
+      summary: z.string().optional().describe('New summary for the issue'),
+      description: z.string().optional().describe('New description (markdown supported)'),
+      priority: z.string().optional().describe('New priority'),
+      labels: z.array(z.string()).optional().describe('New list of labels'),
+    },
+    async ({ issue_key, ...fields }) => handleAction(() => client.updateIssue(issue_key, fields))
+  );
 
-// Avvia il server
-async function main() {
+  // 8. jira_get_transitions
+  server.tool(
+    'jira_get_transitions',
+    'Retrieve available workflow transitions for an issue (e.g. "In Progress", "Done", "Under Review").',
+    {
+      issue_key: z.string().describe('The Jira issue key (e.g. PROJ-123)'),
+    },
+    async ({ issue_key }) => handleAction(() => client.getTransitions(issue_key))
+  );
+
+  // 9. jira_transition_issue
+  server.tool(
+    'jira_transition_issue',
+    'Move a Jira issue to a new workflow status by transition ID or target status name.',
+    {
+      issue_key: z.string().describe('The Jira issue key (e.g. PROJ-123)'),
+      transition: z
+        .string()
+        .describe('Transition name (e.g. "In Progress", "Done") or numeric transition ID'),
+      comment: z.string().optional().describe('Optional comment to attach with this transition'),
+    },
+    async ({ issue_key, transition, comment }) =>
+      handleAction(() => client.transitionIssue(issue_key, transition, comment))
+  );
+
+  // 10. jira_get_subtasks
+  server.tool(
+    'jira_get_subtasks',
+    'Get subtasks and child issues linked to a parent Jira issue.',
+    {
+      issue_key: z.string().describe('The parent Jira issue key (e.g. PROJ-123)'),
+    },
+    async ({ issue_key }) => handleAction(() => client.getIssueSubtasks(issue_key))
+  );
+
+  // 11. jira_get_projects
+  server.tool(
+    'jira_get_projects',
+    'List all Jira projects accessible by the authenticated user.',
+    {},
+    async () => handleAction(() => client.getProjects())
+  );
+
+  // 12. jira_whoami
+  server.tool(
+    'jira_whoami',
+    'Verify Jira connection credentials and retrieve current authenticated user details.',
+    {},
+    async () =>
+      handleAction(async () => {
+        const user = await client.getMyself();
+        return {
+          displayName: user.displayName,
+          emailAddress: user.emailAddress,
+          accountId: user.accountId,
+          timeZone: user.timeZone,
+          active: user.active,
+          instanceUrl: client.url,
+        };
+      })
+  );
+
+  return server;
+}
+
+/**
+ * Starts the MCP server on stdio transport
+ */
+export async function startServer() {
+  const server = createMcpServer();
   const transport = new StdioServerTransport();
   await server.connect(transport);
-  console.error('Jira MCP Server avviato');
+  console.error('✅ Copilot Jira MCP Server v2.0.0 running on stdio');
 }
 
-main().catch((error) => {
-  console.error('Errore fatale:', error);
-  process.exit(1);
-});
+// Auto-start if executed directly
+if (import.meta.url === `file://${process.argv[1]}`) {
+  startServer().catch((error) => {
+    console.error('❌ Fatal error starting Jira MCP Server:', error);
+    process.exit(1);
+  });
+}

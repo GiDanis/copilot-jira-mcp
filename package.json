@@ -1,7 +1,7 @@
 {
   "name": "copilot-jira-mcp",
-  "version": "1.0.0",
-  "description": "Official MCP Server for Jira integration with GitHub Copilot CLI",
+  "version": "2.0.0",
+  "description": "Universal MCP Server for Jira integration with GitHub Copilot CLI, Claude Desktop, Cursor, and AI assistants",
   "type": "module",
   "main": "src/index.js",
   "bin": {
@@ -12,13 +12,15 @@
     "setup": "node setup/config-wizard.js",
     "register": "node setup/register-mcp.js",
     "test": "node --test",
-    "lint": "eslint src/"
+    "lint": "eslint src/ setup/ test/"
   },
   "keywords": [
     "copilot",
     "jira",
     "mcp",
     "atlassian",
+    "claude-desktop",
+    "cursor",
     "github-copilot",
     "model-context-protocol",
     "ai",
@@ -38,7 +40,9 @@
     "node": ">=18.0.0"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.0.4"
+    "@modelcontextprotocol/sdk": "^1.32.0",
+    "dotenv": "^18.0.5",
+    "zod": "^4.6.5"
   },
   "devDependencies": {
     "eslint": "^8.56.0"
@@ -48,6 +52,7 @@
     "setup/",
     "docs/",
     "README.md",
-    "LICENSE"
+    "LICENSE",
+    ".env.example"
   ]
 }

@@ -1,6 +1,6 @@
 # Usage Examples
 
-Once installed and configured, you can interact with Jira naturally through Copilot.
+Once installed and configured, you can interact with Jira naturally through GitHub Copilot CLI, Claude Desktop, Cursor, or any MCP client.
 
 ## Basic Queries
 
@@ -8,7 +8,7 @@ Once installed and configured, you can interact with Jira naturally through Copi
 
 ```
 > Show me my Jira tickets
-> What tickets are assigned to me?
+> What tickets are assigned to me that are In Progress?
 > List my open issues
 ```
 
@@ -23,27 +23,27 @@ Once installed and configured, you can interact with Jira naturally through Copi
 ### Search by Project
 
 ```
-> Show me tickets in project IIAB
-> Find bugs in project CORE
-> List all epics in project WEB
+> Show me tickets in project PROJ
+> Find bugs in project BACKEND
+> List all stories in project WEB
 ```
 
 ### Search by Priority
 
 ```
 > Show me high priority tickets
-> Find critical bugs
+> Find critical bugs in project PROJ
 > List all blockers
 ```
 
-## Advanced Searches
+## Advanced Searches & JQL
 
 ### JQL Queries
 
 ```
-> Search Jira with JQL: project = IIAB AND status = Open
+> Search Jira with JQL: project = PROJ AND status = Open
 > Find issues with: assignee = currentUser() AND priority = High
-> Query: sprint = "Sprint 23" AND status != Done
+> Query: sprint in openSprints() AND status != Done
 ```
 
 ### Complex Filters
@@ -51,240 +51,84 @@ Once installed and configured, you can interact with Jira naturally through Copi
 ```
 > Show me tickets updated in the last 3 days
 > Find bugs created this month
-> List tickets with no assignee
+> List tickets with no assignee in project PROJ
 > Show me overdue tasks
 ```
 
-### Date-Based Searches
+## Ticket Details & History
+
+### Full Information
 
 ```
-> Tickets created yesterday
-> Issues updated this week
-> Tasks due next week
-> Stories completed last sprint
-```
-
-## Ticket Details
-
-### Get Full Information
-
-```
-> Get details for IIAB-12345
+> Get details for PROJ-12345
 > Show me ticket PROJ-789
-> What's the status of issue CORE-456?
+> What's the status of issue PROJ-456?
 ```
 
-### Comments
+### Comments & Discussions
 
 ```
-> Show me comments on IIAB-12345
-> Get discussion for ticket PROJ-789
-> List recent comments on CORE-456
+> Show me comments on PROJ-12345
+> Get discussion thread for ticket PROJ-789
+> List recent comments on PROJ-456
 ```
 
-### Subtasks
+### Subtasks & Links
 
 ```
-> Show subtasks for IIAB-12345
-> List child issues of EPIC-123
-> What are the subtasks of PROJ-789?
+> Show subtasks for PROJ-12345
+> List child issues of PROJ-100
+> What are the linked blockers for PROJ-789?
 ```
 
-### Attachments
+## Managing Issues & Workflow (Write Operations)
+
+### Adding Comments
 
 ```
-> List attachments on IIAB-12345
-> Show files attached to PROJ-789
-> What documents are on CORE-456?
+> Add a comment to PROJ-12345: "Code review completed, PR merged."
+> Post a note on PROJ-789 explaining the workaround.
 ```
 
-## Workflow Analysis
-
-### Sprint Planning
+### Transitioning Ticket Status
 
 ```
-> Show me all tickets in current sprint
-> List unestimated stories in backlog
-> Find blocked tickets in sprint 23
+> What transitions are available for PROJ-12345?
+> Move ticket PROJ-12345 to "In Progress"
+> Close PROJ-12345 with status "Done" and comment "Resolved in v2.0"
 ```
 
-### Team Coordination
+### Creating Tickets
 
 ```
-> Show me John's tickets
-> What is the team working on?
-> List tickets assigned to frontend team
+> Create a Bug in project PROJ with summary "Cart checkout fails with 500 error" and priority High
+> Create a Task in project DEV: "Update database migration scripts"
 ```
 
-### Bug Tracking
+### Updating Tickets
 
 ```
-> How many open bugs do we have?
-> Show me critical bugs in production
-> List bugs reported this week
+> Update PROJ-12345 summary to "Refactor authentication flow"
+> Change priority of PROJ-456 to High
 ```
 
-## Reporting
+## Team Coordination & Standup
 
-### Status Reports
-
-```
-> Summarize my completed tickets this week
-> How many issues did I close this month?
-> Show my productivity stats
-```
-
-### Project Health
+### Morning Standup Prep
 
 ```
-> How many open vs closed tickets in project IIAB?
-> What's the bug-to-feature ratio?
-> Show distribution of tickets by priority
+> What did I work on yesterday?
+> Any open bugs assigned to me?
+> What is high priority in the current sprint?
 ```
 
-## Integration with Development
-
-### Code Review Context
+### Verifying Account & Access
 
 ```
-> Get details for IIAB-12345
-> (While reviewing a PR)
-> What does this ticket require?
+> Who am I logged in as in Jira?
+> List all accessible Jira projects
 ```
-
-### Commit Messages
-
-```
-> Show me IIAB-12345 summary
-> (Generates: "IIAB-12345: Fix login authentication bug")
-```
-
-### Release Notes
-
-```
-> List all tickets completed in sprint 23
-> Show me features shipped this month
-> Generate release notes from tickets
-```
-
-## Power User Tips
-
-### Saved Searches
-
-Create aliases for common queries:
-
-```bash
-# Add to your shell profile
-alias my-tickets="copilot 'show me my Jira tickets'"
-alias team-bugs="copilot 'list open bugs in project IIAB'"
-alias sprint-status="copilot 'summarize current sprint progress'"
-```
-
-### Automation Examples
-
-```bash
-# Morning standup prep
-copilot "What did I work on yesterday?" > standup.txt
-
-# Weekly report
-copilot "List my completed tickets this week" > weekly-report.txt
-
-# Bug triage
-copilot "Show me unassigned critical bugs" > bugs-to-triage.txt
-```
-
-### Combining with Other Tools
-
-```bash
-# Export to CSV
-copilot "Get my tickets" | jq -r '.issues[] | [.key,.summary] | @csv' > tickets.csv
-
-# Send to Slack
-copilot "Critical bugs" | slack-cli send #dev-team
-
-# Create GitHub issue from Jira
-copilot "Get IIAB-12345" | gh issue create --title "..." --body "..."
-```
-
-## Natural Language Examples
-
-Copilot understands various phrasings:
-
-```
-✅ "Show my tickets"
-✅ "What am I working on?"
-✅ "My assigned issues"
-✅ "Tickets for me"
-✅ "What's on my plate?"
-
-✅ "Find bugs"
-✅ "Search for bugs"
-✅ "Show me bugs"
-✅ "List bug tickets"
-✅ "Bug issues"
-
-✅ "Get ticket IIAB-123"
-✅ "Show IIAB-123"
-✅ "Details for IIAB-123"
-✅ "What's IIAB-123 about?"
-✅ "Tell me about IIAB-123"
-```
-
-## Real-World Scenarios
-
-### Scenario 1: Morning Standup
-
-```
-Developer: "What did I work on yesterday?"
-Copilot: [Lists tickets updated yesterday]
-
-Developer: "Any blockers?"
-Copilot: [Searches for blocked tickets]
-
-Developer: "What's next priority?"
-Copilot: [Shows highest priority unstarted tickets]
-```
-
-### Scenario 2: Bug Investigation
-
-```
-Developer: "Show me IIAB-12345"
-Copilot: [Shows ticket details]
-
-Developer: "Are there related bugs?"
-Copilot: [Searches for linked issues]
-
-Developer: "Show me comments"
-Copilot: [Displays discussion thread]
-```
-
-### Scenario 3: Sprint Review
-
-```
-Manager: "How many tickets did we complete?"
-Copilot: [Counts completed issues]
-
-Manager: "What features shipped?"
-Copilot: [Lists story tickets]
-
-Manager: "Any rollover to next sprint?"
-Copilot: [Shows incomplete tickets]
-```
-
-## Tips & Tricks
-
-1. **Be specific** - "Show IIAB tickets" is better than "Show tickets"
-2. **Use JQL** - For complex queries, JQL is more precise
-3. **Save common queries** - Create shell aliases for frequently-used searches
-4. **Combine queries** - Ask follow-up questions for deeper analysis
-5. **Export results** - Pipe output to files or other tools
-
-## Next Steps
-
-- Explore [Configuration Options](configuration.md)
-- Check [Troubleshooting Guide](troubleshooting.md)
-- Read [Contributing Guide](../CONTRIBUTING.md)
 
 ---
 
-**Have a cool usage example?** Share it in [Discussions](https://github.com/gdanise/copilot-jira-mcp/discussions)!
+**Have a cool usage example?** Share it in [Discussions](https://github.com/GiDanis/copilot-jira-mcp/discussions)!

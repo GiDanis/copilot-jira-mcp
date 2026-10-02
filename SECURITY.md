@@ -62,7 +62,7 @@ All communication with Jira uses:
 If you discover a security vulnerability:
 
 1. **DO NOT** open a public issue
-2. Email: [your-email@example.com] with:
+2. Email: giuseppedanise@gmail.com or open a private security advisory on GitHub with:
    - Description of the vulnerability
    - Steps to reproduce
    - Potential impact

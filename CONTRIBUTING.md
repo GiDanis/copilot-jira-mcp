@@ -170,7 +170,7 @@ Contributors will be:
 
 ## 📞 Questions?
 
-- Open a [Discussion](https://github.com/gdanise/copilot-jira-mcp/discussions)
+- Open a [Discussion](https://github.com/GiDanis/copilot-jira-mcp/discussions)
 - Comment on relevant issues
 - Reach out to maintainers
 
