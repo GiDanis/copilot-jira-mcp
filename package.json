@@ -46,7 +46,7 @@
     "zod": "^4.6.5"
   },
   "devDependencies": {
-    "eslint": "^10.11.0"
+    "eslint": "^10.13.0"
   },
   "files": [
     "src/",
